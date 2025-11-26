@@ -1,0 +1,74 @@
+FROM nvidia/cuda:12.9.1-cudnn-runtime-ubuntu24.04 AS base
+
+# Install system dependencies, but do NOT install python manually
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    curl \
+    build-essential \
+    ffmpeg \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv (copy from official uv image)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+WORKDIR /app
+
+# Install Python 3.12 using uv (creates .venv and installs python)
+RUN uv venv --python 3.12
+
+# Make sure uv and python from the venv are in PATH
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Copy dependency files first for caching
+COPY pyproject.toml ./
+COPY uv.lock ./
+
+# Sync dependencies in locked, reproducible mode
+RUN uv sync --frozen
+
+# Make PyTorch libraries discoverable by the system linker
+ENV LD_LIBRARY_PATH="/app/.venv/lib/python3.12/site-packages/torch/lib:${LD_LIBRARY_PATH}"
+# Copy source code
+COPY app/ ./app/
+COPY main.py ./
+COPY voice-sample.mp3 ./voice-sample.mp3
+
+# Prepare cache, voices, etc.
+RUN mkdir -p /cache /voices /data/long_text_jobs
+
+ENV PORT=4123
+ENV EXAGGERATION=0.5
+ENV CFG_WEIGHT=0.5
+ENV TEMPERATURE=0.8
+ENV VOICE_SAMPLE_PATH=/app/voice-sample.mp3
+ENV MAX_CHUNK_LENGTH=280
+ENV MAX_TOTAL_LENGTH=3000
+ENV DEVICE=cuda
+ENV MODEL_CACHE_DIR=/cache
+ENV VOICE_LIBRARY_DIR=/voices
+ENV HOST=0.0.0.0
+
+# Long text TTS settings
+ENV LONG_TEXT_DATA_DIR=/data/long_text_jobs
+ENV LONG_TEXT_MAX_LENGTH=100000
+ENV LONG_TEXT_CHUNK_SIZE=2500
+ENV LONG_TEXT_SILENCE_PADDING_MS=200
+ENV LONG_TEXT_JOB_RETENTION_DAYS=7
+ENV LONG_TEXT_MAX_CONCURRENT_JOBS=3
+
+# NVIDIA/CUDA environment variables
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+# Expose port
+EXPOSE ${PORT}
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5m --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+# Run the application using the venv
+CMD ["/app/.venv/bin/python", "main.py"]

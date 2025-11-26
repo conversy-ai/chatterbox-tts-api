@@ -5,12 +5,10 @@ description = "REST API for Chatterbox TTS with OpenAI compatibility"
 authors = [{ name = "Travis Van Nimwegen", email = "tts@travis2.com" }]
 readme = "README.md"
 license = { text = "AGPLv3" }
-requires-python = ">=3.11, <3.12"
+requires-python = ">=3.11"
 dependencies = [
-  "chatterbox-tts @ git+https://github.com/conversy-ai/chatterbox.git",
+  "chatterbox-tts @ git+https://github.com/conversy-ai/chatterbox-opt.git@faster",
   "resemble-perth",
-  "torch>=2.0.0,<2.7.0",
-  "torchaudio>=2.0.0,<2.7.0",
   "fastapi>=0.104.0",
   "uvicorn[standard]>=0.24.0",
   "pydantic>=2.0.0",
@@ -20,6 +18,7 @@ dependencies = [
   "requests>=2.28.0",
   "sse-starlette>=3.0.2",
   "pydub>=0.25.1",
+  "soundfile>=0.13.1",
 ]
 
 [project.urls]
