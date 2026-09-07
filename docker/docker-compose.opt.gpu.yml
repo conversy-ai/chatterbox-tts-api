@@ -37,6 +37,8 @@ services:
       - DEVICE=${DEVICE:-cuda}
       - MODEL_CACHE_DIR=${MODEL_CACHE_DIR:-/cache}
       - VOICE_LIBRARY_DIR=${VOICE_LIBRARY_DIR:-/voices}
+      # Set to t3_mtl23ls_v2.safetensors to roll back the multilingual checkpoint
+      - CHATTERBOX_T3_MODEL=${CHATTERBOX_T3_MODEL:-t3_mtl23ls_v3.safetensors}
 
       # NVIDIA/CUDA settings
       - NVIDIA_VISIBLE_DEVICES=all

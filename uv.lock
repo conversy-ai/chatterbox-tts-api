@@ -287,7 +287,7 @@ wheels = [
 [[package]]
 name = "chatterbox-tts"
 version = "0.4.4"
-source = { git = "https://github.com/conversy-ai/chatterbox-opt.git?rev=faster#04f0146fe599a025cce2a6ea40be2b95fa46a731" }
+source = { git = "https://github.com/conversy-ai/chatterbox-opt.git?rev=faster#62cb0ff064672eb370ea04cf9da867328890ff29" }
 dependencies = [
     { name = "conformer" },
     { name = "diffusers" },
