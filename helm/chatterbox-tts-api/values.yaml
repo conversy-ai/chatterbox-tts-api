@@ -1,0 +1,68 @@
+imagePullSecret: ""
+
+image:
+  repository: rg.fr-par.scw.cloud/conversy-dev-registry/chatterbox-tts-api
+  tag: 2026.10.16-0001
+
+replicaCount: 1
+
+# Containern lyssnar på 4123. Servicen exponeras på 80, som dagens URL:er använder.
+port: 4123
+servicePort: 80
+
+env:
+  - name: PORT
+    value: "4123"
+  - name: HOST
+    value: "0.0.0.0"
+  - name: DEVICE
+    value: cuda
+  - name: EXAGGERATION
+    value: "0.5"
+  - name: CFG_WEIGHT
+    value: "0.5"
+  - name: TEMPERATURE
+    value: "0.8"
+  - name: MAX_CHUNK_LENGTH
+    value: "280"
+  - name: MAX_TOTAL_LENGTH
+    value: "3000"
+  - name: MODEL_CACHE_DIR
+    value: /cache
+  # huggingface_hub ignorerar MODEL_CACHE_DIR. Utan HF_HOME hamnar vikterna i
+  # containerns lager och hämtas om vid varje omstart.
+  - name: HF_HOME
+    value: /cache
+  - name: VOICE_LIBRARY_DIR
+    value: /voices
+  - name: VOICE_SAMPLE_PATH
+    value: /app/voice-sample.mp3
+  - name: CHATTERBOX_T3_MODEL
+    value: t3_mtl23ls_v3.safetensors
+  - name: LONG_TEXT_DATA_DIR
+    value: /data/long_text_jobs
+  - name: LONG_TEXT_MAX_LENGTH
+    value: "100000"
+  - name: LONG_TEXT_CHUNK_SIZE
+    value: "2500"
+  - name: LONG_TEXT_SILENCE_PADDING_MS
+    value: "200"
+  - name: LONG_TEXT_JOB_RETENTION_DAYS
+    value: "7"
+  - name: LONG_TEXT_MAX_CONCURRENT_JOBS
+    value: "3"
+
+resources:
+  requests: { cpu: 1000m, memory: 4Gi }
+  limits:
+    cpu: 4000m
+    memory: 12Gi
+    nvidia.com/gpu: 1
+
+# En disk för modellcache (/cache), röstbibliotek (/voices) och långa jobb.
+storage:
+  size: 15Gi
+  storageClass: sbs-default-retain
+
+nodeSelector:
+  nvidia.com/device-plugin.config: time-slicing-6-r
