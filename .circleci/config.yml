@@ -80,7 +80,7 @@ jobs:
         command: |
           IMAGE=rg.fr-par.scw.cloud/conversy-dev-registry/chatterbox-tts-api
 
-          docker build -f docker/Dockerfile -t ${IMAGE}:${TAG} .
+          docker build -f docker/Dockerfile.opt -t ${IMAGE}:${TAG} .
           docker push ${IMAGE}:${TAG}
     - run:
         name: Deploy using Helm
