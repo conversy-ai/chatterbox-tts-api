@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatterbox-tts-api
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: chatterbox-tts-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: chatterbox-tts-api
+    spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: chatterbox-tts-api
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: {{ .Values.port }}
+        env:
+          {{- toYaml .Values.env | nindent 10 }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        volumeMounts:
+        - name: data
+          mountPath: /cache
+          subPath: cache
+        - name: data
+          mountPath: /voices
+          subPath: voices
+        - name: data
+          mountPath: /data/long_text_jobs
+          subPath: long_text_jobs
+        startupProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.port }}
+          periodSeconds: 5
+          failureThreshold: 120
+          timeoutSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.port }}
+          periodSeconds: 10
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.port }}
+          periodSeconds: 5
+          timeoutSeconds: 10
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: chatterbox-tts-api-data
+      {{- if .Values.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      {{- end }}

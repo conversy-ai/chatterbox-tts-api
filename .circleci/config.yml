@@ -1,0 +1,102 @@
+version: 2.1
+
+jobs:
+  job_build_and_push:
+    docker:
+    - image: cimg/base:stable
+    steps:
+    - checkout
+    - setup_remote_docker
+    - run:
+        name: Install Scaleway CLI
+        command: |
+          set -euo pipefail
+          SCW_VERSION="2.55.0"
+          curl -fsSL "https://github.com/scaleway/scaleway-cli/releases/download/v${SCW_VERSION}/scaleway-cli_${SCW_VERSION}_linux_amd64" -o /tmp/scw
+          sudo install -m 755 /tmp/scw /usr/local/bin/scw
+          rm -f /tmp/scw
+          scw version
+    - run:
+        name: Install Helm
+        command: |
+          set -euo pipefail
+          HELM_VERSION="3.20.2"
+          curl -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz" -o /tmp/helm.tgz
+          sudo tar -C /usr/local/bin --strip-components=1 -xzf /tmp/helm.tgz linux-amd64/helm
+          rm -f /tmp/helm.tgz
+          helm version
+    - run:
+        name: Install kubectl
+        command: |
+          set -euo pipefail
+          KUBECTL_VERSION="1.36.0"
+          curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" -o /tmp/kubectl
+          sudo install -m 755 /tmp/kubectl /usr/local/bin/kubectl
+          rm -f /tmp/kubectl
+          kubectl version --client=true
+    - run:
+        name: Install Scaleway CLI
+        command: |
+          set -euo pipefail
+          SCW_VERSION="2.55.0"
+          curl -fsSL "https://github.com/scaleway/scaleway-cli/releases/download/v${SCW_VERSION}/scaleway-cli_${SCW_VERSION}_linux_amd64" -o /tmp/scw
+          sudo install -m 755 /tmp/scw /usr/local/bin/scw
+          rm -f /tmp/scw
+          scw version
+    - run:
+        name: Install kubeconfig (Scaleway K8s)
+        command: |
+          set -euo pipefail
+          CLUSTER_ID="${SCW_K8S_CLUSTER_ID:-}"
+          if [[ -z "${CLUSTER_ID}" ]]; then
+            echo "Set SCW_K8S_CLUSTER_ID in interpreter-dev context."
+            exit 1
+          fi
+          REGION="${SCW_DEFAULT_REGION:-fr-par}"
+          scw k8s kubeconfig install "${CLUSTER_ID}" "region=${REGION}"
+    - run:
+        name: Create or update image pull secret
+        command: |
+          kubectl -n interpreter create secret docker-registry scw-registry \
+            --docker-server=rg.fr-par.scw.cloud \
+            --docker-username=nologin \
+            --docker-password="${SCW_READ_CONTAINER_REGISTRY}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+    - run:
+        name: Login to Scaleway registry
+        command: echo "$SCW_SECRET_KEY" | docker login rg.fr-par.scw.cloud -u nologin --password-stdin
+    - run:
+        name: Create image tag
+        command: |
+          DATE=$(date +%Y%m%d)
+          TAG="${DATE}-<<pipeline.number>>-${CIRCLE_SHA1:0:7}"
+
+          echo "Tag: ${TAG}"
+
+          echo "export TAG=${TAG}" >> "$BASH_ENV"
+    - run:
+        name: Build image
+        command: |
+          IMAGE=rg.fr-par.scw.cloud/conversy-dev-registry/chatterbox-tts-api
+
+          docker build -f docker/Dockerfile -t ${IMAGE}:${TAG} .
+          docker push ${IMAGE}:${TAG}
+    - run:
+        name: Deploy using Helm
+        command: |
+          helm upgrade --install chatterbox-tts-api ./helm/chatterbox-tts-api \
+          --namespace interpreter \
+          --set image.tag=$TAG \
+          --atomic \
+          --wait --timeout 10m \
+          --set imagePullSecret=scw-registry
+
+workflows:
+  build_and_deploy:
+    jobs:
+      - job_build_and_push:
+          context: interpreter-dev
+          filters:
+            branches:
+              only: main

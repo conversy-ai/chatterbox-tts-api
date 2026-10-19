@@ -1,0 +1,9 @@
+apiVersion: v2
+name: chatterbox-tts-api
+description: A Helm chart for chatterbox-tts-api
+
+type: application
+
+version: 0.1.0
+
+appVersion: "opt"
