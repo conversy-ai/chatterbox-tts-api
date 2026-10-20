@@ -38,7 +38,7 @@ env:
   - name: VOICE_SAMPLE_PATH
     value: /app/voice-sample.mp3
   - name: CHATTERBOX_T3_MODEL
-    value: t3_mtl23ls_v3.safetensors
+    value: t3_mtl23ls_v2.safetensors
   - name: LONG_TEXT_DATA_DIR
     value: /data/long_text_jobs
   - name: LONG_TEXT_MAX_LENGTH
