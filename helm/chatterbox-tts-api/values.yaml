@@ -65,3 +65,11 @@ storage:
   storageClass: sbs-default-retain
 
 nodeSelector: {}
+
+# Kontorstider: utanför fönstret skalas deployen till 0 pods (KEDA cron-trigger).
+# Med enabled: false gäller replicaCount dygnet runt.
+officeHours:
+  enabled: true
+  timezone: Europe/Stockholm
+  start: "30 7 * * 1-5"
+  end: "30 17 * * 1-5"

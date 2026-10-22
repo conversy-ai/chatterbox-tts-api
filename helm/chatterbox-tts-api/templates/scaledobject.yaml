@@ -1,0 +1,20 @@
+{{- if .Values.officeHours.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: chatterbox-tts-api-office-hours
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: chatterbox-tts-api
+  minReplicaCount: 0
+  maxReplicaCount: {{ .Values.replicaCount }}
+  triggers:
+    - type: cron
+      metadata:
+        timezone: {{ .Values.officeHours.timezone | quote }}
+        start: {{ .Values.officeHours.start | quote }}
+        end: {{ .Values.officeHours.end | quote }}
+        desiredReplicas: {{ .Values.replicaCount | quote }}
+{{- end }}

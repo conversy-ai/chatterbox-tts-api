@@ -4,7 +4,9 @@ metadata:
   name: chatterbox-tts-api
   namespace: {{ .Release.Namespace }}
 spec:
+  {{- if not .Values.officeHours.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   strategy:
     type: Recreate
   selector:
