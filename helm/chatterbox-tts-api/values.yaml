@@ -1,7 +1,7 @@
 imagePullSecret: ""
 
 image:
-  repository: rg.fr-par.scw.cloud/conversy-dev-registry/chatterbox-tts-api
+  repository: rg.fr-par.scw.cloud/conversy-images/chatterbox-tts-api
   tag: 2026.10.16-0001
 
 replicaCount: 1
@@ -64,5 +64,4 @@ storage:
   size: 15Gi
   storageClass: sbs-default-retain
 
-nodeSelector:
-  nvidia.com/device-plugin.config: time-slicing-6-r
+nodeSelector: {}
