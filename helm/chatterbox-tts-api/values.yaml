@@ -57,7 +57,7 @@ resources:
   limits:
     cpu: 4000m
     memory: 12Gi
-    nvidia.com/gpu: 1
+    nvidia.com/gpu: 4
 
 # En disk för modellcache (/cache), röstbibliotek (/voices) och långa jobb.
 storage:
