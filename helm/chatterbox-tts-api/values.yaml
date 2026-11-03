@@ -57,7 +57,7 @@ resources:
   limits:
     cpu: 4000m
     memory: 12Gi
-    nvidia.com/gpu: 4
+    nvidia.com/gpu: 1
 
 # En disk för modellcache (/cache), röstbibliotek (/voices) och långa jobb.
 storage:
@@ -71,5 +71,5 @@ nodeSelector: {}
 officeHours:
   enabled: true
   timezone: Europe/Stockholm
-  start: "30 7 * * 1-5"
+  start: "00 6 * * 1-5"
   end: "30 17 * * 1-5"
